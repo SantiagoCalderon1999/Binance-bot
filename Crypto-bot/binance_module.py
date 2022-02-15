@@ -14,14 +14,14 @@ def get_recent_data():
     client = Client(c.API_KEY, c.API_SECRET, tld='com')
     symbolTicker = 'BTCUSDT'
     klines = client.get_historical_klines(symbolTicker, Client.KLINE_INTERVAL_1HOUR, "50 day ago UTC")
-    Periodos =len(klines)
+    periods =len(klines)
     df = pd.concat([pd.DataFrame([[datetime.datetime.fromtimestamp(float(klines[i][0])/1000),
                     float(klines[i][1]),
                     float(klines[i][2]),
                     float(klines[i][3]),
                     float(klines[i][4]),
                     float(klines[i][5])]], 
-                    columns=['Date','Open','High','Low','Close','Volume']) for i in range(Periodos)], 
+                    columns=['Date','Open','High','Low','Close','Volume']) for i in range(periods)], 
                     ignore_index=True)
 
     #df.set_index('Date', inplace=True)
