@@ -24,5 +24,4 @@ def get_recent_data():
                     columns=['Date','Open','High','Low','Close','Volume']) for i in range(periods)], 
                     ignore_index=True)
 
-    #df.set_index('Date', inplace=True)
     return df

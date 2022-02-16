@@ -13,6 +13,9 @@ MAX_SHARE_PRICE = 43000
 MAX_OPEN_POSITIONS = 5
 MAX_STEPS = 20000
 
+#Fee is 0.1%
+BINANCE_TRADING_FEE = 0.001 
+
 INITIAL_ACCOUNT_BALANCE = 1000000
 
 class CryptoTradingEnv(Env):
@@ -27,6 +30,8 @@ class CryptoTradingEnv(Env):
         self.buy_indexes_plot = []
         self.sell_indexes_plot = []
         self.hold_indexes_plot = []
+        self.net_worth_array = []
+        self.fee_tracking = []
         # Action space vector has two values:
         #       First value determines the action: [0,1) -> buy, [1,2) -> sell, [2,3) -> hold 
         #       Second value is the amount of shares bought or sold
@@ -45,32 +50,34 @@ class CryptoTradingEnv(Env):
         ])
 
 
-    def _buy(self, current_price, amount):
-        
+    def _buy(self, current_price, amount):        
         total_possible_shares = int(self.balance / current_price)
         shares_bought = int(total_possible_shares * amount)
-        transaction_cost = shares_bought * current_price
-
+        self.fee = BINANCE_TRADING_FEE * shares_bought * current_price
+        self.fee_acum += self.fee
+        self.fee_tracking.append([self.df.loc[self.current_step, "Date"], self.fee_acum])
+        transaction_cost = shares_bought * current_price 
+        
         self.balance -= transaction_cost
+        self.balance -= self.fee
         self.shares_held += shares_bought
         self.buy_indexes.append(self.current_step)
-        #print(f'total_possible_shares: {total_possible_shares}')
-        #print(f'current_price: {current_price}')
-
-        #print(f'shares_bought: {shares_bought}')
-        print(f'net worth: {self.net_worth}')
-        print()
 
     def _sell(self, current_price, amount):
         shares_sold = int(self.shares_held * amount)
-        self.balance += shares_sold * current_price
+        self.fee = BINANCE_TRADING_FEE * shares_sold * current_price
+        self.fee_acum += self.fee
+        self.fee_tracking.append([self.df.loc[self.current_step, "Date"], self.fee_acum])
+        self.balance += shares_sold * current_price 
+        self.balance -= self.fee
 
         self.shares_held -= shares_sold
         self.total_shares_sold += shares_sold
         self.total_sales_value += shares_sold * current_price
         self.sell_indexes.append(self.current_step)
-        print(f'net worth: {self.net_worth}')
-        print()
+
+    def _hold(self):
+        self.hold_indexes.append(self.current_step)
 
     def _perform_action(self, action):
         current_price =  self.df.loc[self.current_step, "Close"]
@@ -79,6 +86,7 @@ class CryptoTradingEnv(Env):
         self.last_action_value = action_type
         amount = action[1]
         print(f'Action : {action_type}')
+        
         #Buy if action_type is in the interval [0,1)
         if action_type < 1:
            self._buy(current_price, amount)
@@ -86,15 +94,14 @@ class CryptoTradingEnv(Env):
         #Sell if action_type is in the interval [1,2)
         elif action_type < 2:
            self._sell(current_price, amount)
-        else:
-            print('Alaverga que basado')
-            self.hold_indexes.append(self.current_step)
-
-        self.net_worth = self.balance + self.shares_held * current_price
 
         #Hold if action_type is in the interval [2,3)
+        else:
+            self._hold()
 
-        #Hold does not have an action in the environment
+        self.net_worth = self.balance + self.shares_held * current_price
+        self.net_worth_array.append([self.df.loc[self.current_step, "Date"], self.net_worth])
+        
 
     def step(self, action):
         self._perform_action(action)
@@ -109,12 +116,16 @@ class CryptoTradingEnv(Env):
         reward = self.net_worth * delay_modifier
 
         obs = self._get_observation()
-
+        print(self.fee_acum)
         if ((len(self.df) - 6) == self.current_step) | (self.net_worth <= 0):
             done = True
             self.buy_indexes_plot = self.buy_indexes
             self.sell_indexes_plot = self.sell_indexes
             self.hold_indexes_plot = self.hold_indexes
+            self.df_net_worth = pd.DataFrame(self.net_worth_array,
+                                             columns =['Date','Close'])
+            self.df_fee_tracking = pd.DataFrame(self.fee_tracking,
+                                                columns =['Date','Close'])                                 
         else:
             done = False
 
@@ -129,6 +140,8 @@ class CryptoTradingEnv(Env):
         self.total_sales_value = 0
         self.last_action_value = 0
         self.current_step = 0
+        self.fee = 0
+        self.fee_acum = 0
         self.buy_indexes = []
         self.sell_indexes = []
         self.hold_indexes = []
@@ -143,10 +156,12 @@ class CryptoTradingEnv(Env):
       
         # After finishing the counter of steps restart to 0, that's where it is plotted
         if (self.current_step == 0):
-            plotting.plot_crypto_data(self.df, 
+            plotting.plot_crypto_data_buy_sell(self.df, 
                                       self.buy_indexes_plot, 
                                       self.sell_indexes_plot, 
                                       self.hold_indexes_plot)
+            plotting.plot_comparation_crypto_data(self.df_net_worth, "Net worth", self.df, "Crypto value")
+            plotting.plot_simple_crypto_data(self.df_fee_tracking, "Fees")
         else:
             print(f'Last action value: {self.last_action_value}')
             print(f'Step: {self.current_step}')
@@ -156,6 +171,10 @@ class CryptoTradingEnv(Env):
             print(f'Net worth: {self.net_worth}')
             print(f'Profit: {profit}')
             print()
+
+    def compare_results(self):
+        plotting.plot_comparation_crypto_data(self.df_net_worth)
+
             
         
         
