@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 
 def plot_simple_crypto_data(df, name):
+    plt.clf()
     plt.plot(df['Date'], 
             df['Close'], 
             label=name)
@@ -11,6 +12,7 @@ def plot_simple_crypto_data(df, name):
     plt.show()
 
 def plot_comparation_crypto_data(df_1, name_1, df_2, name_2):
+    plt.clf()
     plt.plot(df_1['Date'], 
             df_1['Close']/df_1['Close'][0], 
             label=name_1)
@@ -24,6 +26,7 @@ def plot_comparation_crypto_data(df_1, name_1, df_2, name_2):
     plt.show()
 
 def plot_crypto_data_buy_sell(df, buy_indexes, sell_indexes, hold_indexes):
+    plt.clf()
     plt.plot(df['Date'], 
             df['Close'], 
             label='Close price')
@@ -37,11 +40,11 @@ def plot_crypto_data_buy_sell(df, buy_indexes, sell_indexes, hold_indexes):
             'v', 
             markersize=10, 
             color='r')
-    plt.plot(df.iloc[hold_indexes]['Date'], 
-            df.iloc[hold_indexes]['Close'], 
-            '.', 
-            markersize=10, 
-            color='b')
+    #plt.plot(df.iloc[hold_indexes]['Date'], 
+    #        df.iloc[hold_indexes]['Close'], 
+    #        '.', 
+    #        markersize=10, 
+    #        color='b')
     plt.ylabel('Close price')
     plt.xlabel('Date')
     plt.xticks(rotation=70)
