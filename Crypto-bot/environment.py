@@ -126,7 +126,7 @@ class CryptoTradingEnv(Env):
         else:
             done = False
 
-        info = {'last_net_worth' : self.net_worth}
+        info = {'last_net_worth_normalized' : self.net_worth/ INITIAL_ACCOUNT_BALANCE}
         
         return obs, reward, done, info
 
