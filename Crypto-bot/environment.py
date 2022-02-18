@@ -20,7 +20,7 @@ class CryptoTradingEnv(Env):
         super(CryptoTradingEnv, self).__init__()
         self.training_steps = training_steps
         self.df = df
-        
+        self.partial_reset()
         # Action space vector has two values:
         #       First value determines the action: [0,1) -> buy, [1,2) -> sell, [2,3) -> hold 
         #       Second value is the amount of shares bought or sold
@@ -98,7 +98,7 @@ class CryptoTradingEnv(Env):
                                       self.buy_indexes_plot, 
                                       self.sell_indexes_plot, 
                                       self.hold_indexes_plot)
-        plotting.plot_comparation_crypto_data(self.df_net_worth, "Net worth", self.df, "Crypto value")
+        plotting.plot_comparison_crypto_data(self.df_net_worth, "Net worth", self.df, "Crypto value")
         plotting.plot_simple_crypto_data(self.df_fee_tracking, "Fees")
     def step(self, action):
         self._perform_action(action)
@@ -122,7 +122,7 @@ class CryptoTradingEnv(Env):
                                              columns =['Date','Close'])
             self.df_fee_tracking = pd.DataFrame(self.fee_tracking,
                                                 columns =['Date','Close'])    
-            self._plot()                             
+                                  
         else:
             done = False
 
@@ -141,6 +141,17 @@ class CryptoTradingEnv(Env):
         self.current_step = 0
         self.fee = 0
         self.fee_acum = 0
+        #Returns initial observation
+        return self._get_observation()
+
+    def render(self, mode='human', close=False):
+        # Render the environment to the screen
+        profit = self.net_worth - INITIAL_ACCOUNT_BALANCE
+        self._plot()
+        # After finishing the counter of steps restart to 0, that's where it is plotted
+        if (self.current_step == 0):
+            pass
+    def partial_reset(self):
         self.buy_indexes = []
         self.sell_indexes = []
         self.hold_indexes = []
@@ -151,20 +162,9 @@ class CryptoTradingEnv(Env):
         self.fee_tracking = []
         self.df_net_worth = pd.DataFrame()
         self.df_fee_tracking = pd.DataFrame()
-        #Returns initial observation
-        return self._get_observation()
 
-    def render(self, mode='human', close=False):
-        # Render the environment to the screen
-        profit = self.net_worth - INITIAL_ACCOUNT_BALANCE
-        
-      
-        # After finishing the counter of steps restart to 0, that's where it is plotted
-        if (self.current_step == 0):
-            pass
-
-    def compare_results(self):
-        plotting.plot_comparation_crypto_data(self.df_net_worth)
+    def _compare_results(self):
+        plotting.plot_comparison_crypto_data(self.df_net_worth)
 
             
         

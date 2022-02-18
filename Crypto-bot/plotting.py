@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plot_simple_crypto_data(df, name):
     plt.clf()
@@ -11,7 +12,7 @@ def plot_simple_crypto_data(df, name):
     plt.legend(loc=0)
     plt.show()
 
-def plot_comparation_crypto_data(df_1, name_1, df_2, name_2):
+def plot_comparison_crypto_data(df_1, name_1, df_2, name_2):
     plt.clf()
     plt.plot(df_1['Date'], 
             df_1['Close']/df_1['Close'][0], 
@@ -40,13 +41,26 @@ def plot_crypto_data_buy_sell(df, buy_indexes, sell_indexes, hold_indexes):
             'v', 
             markersize=10, 
             color='r')
-    #plt.plot(df.iloc[hold_indexes]['Date'], 
-    #        df.iloc[hold_indexes]['Close'], 
-    #        '.', 
-    #        markersize=10, 
-    #        color='b')
     plt.ylabel('Close price')
     plt.xlabel('Date')
     plt.xticks(rotation=70)
     plt.legend(loc=0)
     plt.show()
+
+def plot_comparison(array):
+    plt.clf()
+    model_quantity = len(array)
+    iterations_per_model = len(array[0])
+    index_array = np.linspace(1,iterations_per_model, iterations_per_model)
+    for i in range(model_quantity):
+            name = "Model " + str(i + 1)
+            plt.plot(index_array, 
+                     array[i],
+                     label = name)
+    plt.ylabel('Value')
+    plt.xlabel('Index')
+    plt.legend(loc=0)
+    plt.show()
+        
+
+

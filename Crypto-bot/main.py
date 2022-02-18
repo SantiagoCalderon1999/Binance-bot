@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 import binance_module
 from environment import CryptoTradingEnv
 import helpers
+import model_comparison
 
 klines_interval = '4h'
 start_date = '365 days ago'
@@ -24,14 +25,14 @@ training_percentage = 0.7
 df_train, df_test = helpers.split_DataFrame(df, training_percentage)
 
 # Create environments
-training_steps = 10000
+training_steps = 100
 env_train = DummyVecEnv([lambda: CryptoTradingEnv(df_train, training_steps)])
 env_test = DummyVecEnv([lambda: CryptoTradingEnv(df_test, training_steps)])
 
 models = []
 
-models_quantity = 10
-iteration_per_model = 10
+models_quantity = 1
+iteration_per_model = 1
 #Train models
 for i  in range(models_quantity):
   models.append(A2C('MlpPolicy', env_train, verbose = 1))
@@ -45,12 +46,13 @@ average_net_worth = 0
 internal = []
 external = []
 for i  in range(models_quantity):
-  print(f'Model {i + 1}')
+  #print(f'Model {i + 1}')
   net_worth_accum = 0
   internal =[]
   for j in range(iteration_per_model):
-    print(f'Iteration {j + 1}')
+    #print(f'Iteration {j + 1}')
     obs = env_test.reset()    
+    env_test.env_method("partial_reset")
     while True:
       action, _states = models[i].predict(obs)
       obs, rewards, done, info = env_test.step(action) 
@@ -67,16 +69,16 @@ for i  in range(models_quantity):
     index_best_net_worth = i
 
 #Iterate best model
+obs = env_test.reset()   
+env_test.env_method("partial_reset")
 while True:
     action, _states = models[index_best_net_worth].predict(obs)
-    obs, rewards, done, info = env_test.step(action) 
-    env_test.render() 
+    obs, rewards, done, info = env_test.step(action)     
     if done:
+      env_test.render() 
       break
 
 print(f'Best net worth: {best_net_worth}')
 print(f'Best model: # {index_best_net_worth + 1}')
-  
-  
-  
-
+    
+model_comparison.compare_data(external)
