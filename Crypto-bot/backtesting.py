@@ -25,14 +25,14 @@ training_percentage = 0.7
 df_train, df_test = helpers.split_DataFrame(df, training_percentage)
 
 # Create environments
-training_steps = 5000
+training_steps = 500
 env_train = DummyVecEnv([lambda: CryptoTradingEnv(df_train, training_steps)])
 env_test = DummyVecEnv([lambda: CryptoTradingEnv(df_test, training_steps)])
 
 models = []
 
-models_quantity = 10
-iteration_per_model = 10
+models_quantity = 5
+iteration_per_model = 5
 #Train models
 for i  in range(models_quantity):
   models.append(A2C('MlpPolicy', env_train, verbose = 1))
